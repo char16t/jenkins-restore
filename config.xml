@@ -1,0 +1,152 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+    <actions/>
+    <description>Decription</description>
+    <logRotator class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>10</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+    </logRotator>
+    <keepDependencies>false</keepDependencies>
+    <properties>
+        <hudson.security.AuthorizationMatrixProperty>
+            <permission>hudson.model.Item.Workspace:ci_sonartest_mgr</permission>
+            <permission>hudson.model.Item.Read:ci_sonartest_mgr</permission>
+            <permission>hudson.model.Run.Update:ci_sonartest_mgr</permission>
+            <permission>hudson.model.Item.Build:ci_sonartest_mgr</permission>
+            <permission>hudson.model.Item.Discover:ci_sonartest_mgr</permission>
+            <permission>hudson.model.Item.ExtendedRead:anonymous</permission>
+            <permission>hudson.model.Item.ExtendedRead:ci_sonartest_mgr</permission>
+            <permission>hudson.model.Run.Delete:ci_sonartest_mgr</permission>
+            <permission>hudson.model.Item.Configure:ci_sonartest_mgr</permission>
+            <permission>hudson.model.Item.Delete:ci_sonartest_mgr</permission>
+            <permission>hudson.model.Item.Cancel:ci_sonartest_mgr</permission>
+        </hudson.security.AuthorizationMatrixProperty>
+        <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.4.1">
+            <useBuildBlocker>false</useBuildBlocker>
+        </hudson.plugins.buildblocker.BuildBlockerProperty>
+        <hudson.queueSorter.PrioritySorterJobProperty plugin="PrioritySorter@2.9">
+            <priority>100</priority>
+        </hudson.queueSorter.PrioritySorterJobProperty>
+        <org.jenkinsci.plugins.mailwatcher.WatcherJobProperty plugin="mail-watcher-plugin@1.8">
+            <watcherAddresses>SupportGroup@company.com</watcherAddresses>
+        </org.jenkinsci.plugins.mailwatcher.WatcherJobProperty>
+        <hudson.model.ParametersDefinitionProperty>
+            <parameterDefinitions>
+                <hudson.model.StringParameterDefinition>
+                    <name>SVN_REV</name>
+                    <description/>
+                    <defaultValue>HEAD</defaultValue>
+                </hudson.model.StringParameterDefinition>
+                <hudson.model.StringParameterDefinition>
+                    <name>SVN_URL</name>
+                    <description/>
+                    <defaultValue/>
+                </hudson.model.StringParameterDefinition>
+                <hudson.model.StringParameterDefinition>
+                    <name>EMAIL_RECIPIENTS</name>
+                    <description/>
+                    <defaultValue>default@mail</defaultValue>
+                </hudson.model.StringParameterDefinition>
+            </parameterDefinitions>
+        </hudson.model.ParametersDefinitionProperty>
+        <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.22">
+            <autoRebuild>true</autoRebuild>
+        </com.sonyericsson.rebuild.RebuildSettings>
+        <org.jvnet.hudson.plugins.shelveproject.ShelveProjectProperty plugin="shelve-project-plugin@1.5"/>
+    </properties>
+    <scm class="hudson.scm.SubversionSCM" plugin="subversion@1.54">
+        <locations>
+            <hudson.scm.SubversionSCM_-ModuleLocation>
+                <remote>${SVN_URL}@${SVN_REV}</remote>
+                <local>wc</local>
+                <depthOption>infinity</depthOption>
+                <ignoreExternalsOption>false</ignoreExternalsOption>
+            </hudson.scm.SubversionSCM_-ModuleLocation>
+        </locations>
+        <excludedRegions/>
+        <includedRegions/>
+        <excludedUsers/>
+        <excludedRevprop/>
+        <excludedCommitMessages/>
+        <workspaceUpdater class="hudson.scm.subversion.UpdateUpdater"/>
+        <ignoreDirPropChanges>false</ignoreDirPropChanges>
+        <filterChangelog>false</filterChangelog>
+    </scm>
+    <canRoam>true</canRoam>
+    <disabled>false</disabled>
+    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+    <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+    <jdk>(Default)</jdk>
+    <triggers>
+        <jenkins.triggers.ReverseBuildTrigger>
+            <spec/>
+            <upstreamProjects>PARENT_JOB</upstreamProjects>
+            <threshold>
+                <name>SUCCESS</name>
+                <ordinal>0</ordinal>
+                <color>BLUE</color>
+                <completeBuild>true</completeBuild>
+            </threshold>
+        </jenkins.triggers.ReverseBuildTrigger>
+    </triggers>
+    <concurrentBuild>false</concurrentBuild>
+    <builders>
+        <customplugins2 plugin="customplugin2@1.1.5">
+            <devline>${SVN_URL}</devline>
+        </customplugins2>
+        <hudson.plugins.sonar.SonarRunnerBuilder plugin="sonar@2.1">
+            <installationName>sonar.yourcompany.com</installationName>
+            <project/>
+            <properties>sonar.projectKey=${SONAR_PROJECT_KEY}
+sonar.branch=${SONAR_BRANCH}
+sonar.projectName=${SONAR_PROJECT_NAME}
+sonar.projectVersion=rev.${SVN_REVISION}
+sonar.sources=./
+sonar.java.sources=./
+sonar.java.binaries=./
+sonar.sourceEncoding=UTF-8
+sonar.exclusions=**/*.html, **/*.htm, **/*.xml, **/*.xsd, **/*.ts, **/*.js, **/*.sql, **/*.css, **/*.inc
+sonar.buildbreaker.queryMaxAttempts=60
+sonar.buildbreaker.queryInterval=60000</properties>
+            <javaOpts/>
+            <jdk>jdk1.8.0_102</jdk>
+            <task/>
+        </hudson.plugins.sonar.SonarRunnerBuilder>
+    </builders>
+    <publishers>
+        <customplugins plugin="custom-plugin@1.1.5">
+            <sendBuildReport>false</sendBuildReport>
+            <sendSonarReport>true</sendSonarReport>
+            <workOnFail>false</workOnFail>
+            <breakBuilds>true</breakBuilds>
+            <devline>${SVN_DEVLINE_URL}</devline>
+            <revision>${SVN_REVISION}</revision>
+        </customplugins>
+        <hudson.tasks.Mailer plugin="mailer@1.11">
+            <recipients>${EMAIL_RECIPIENTS}</recipients>
+            <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
+            <sendToIndividuals>false</sendToIndividuals>
+        </hudson.tasks.Mailer>
+    </publishers>
+    <buildWrappers>
+        <hudson.plugins.build__timeout.BuildTimeoutWrapper plugin="build-timeout@1.14">
+            <strategy class="hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy">
+                <timeoutMinutes>180</timeoutMinutes>
+            </strategy>
+            <operationList/>
+        </hudson.plugins.build__timeout.BuildTimeoutWrapper>
+        <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.5.14"/>
+        <hudson.plugins.ansicolor.AnsiColorBuildWrapper plugin="ansicolor@0.4.0">
+            <colorMapName>xterm</colorMapName>
+        </hudson.plugins.ansicolor.AnsiColorBuildWrapper>
+        <EnvInjectBuildWrapper plugin="envinject@1.92.1-NC.fixed">
+            <info>
+                <propertiesContent>SVN_DEVLINE_URL=${SVN_URL_1}
+SVN_REVISION=${SVN_REVISION_1}</propertiesContent>
+                <loadFilesFromMaster>false</loadFilesFromMaster>
+            </info>
+        </EnvInjectBuildWrapper>
+    </buildWrappers>
+</project>
